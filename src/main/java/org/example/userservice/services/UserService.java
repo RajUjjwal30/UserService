@@ -1,11 +1,15 @@
 package org.example.userservice.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.RandomStringUtils;
+//import org.example.userservice.dtos.SendEmailDto;
 import org.example.userservice.models.Token;
 import org.example.userservice.models.User;
 import org.example.userservice.repositories.TokenRepository;
 import org.example.userservice.repositories.UserRepository;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +25,16 @@ public class UserService {
     private UserRepository userRepository;
     private BCryptPasswordEncoder bCryptPasswordEncoder;
     private TokenRepository tokenRepository;
+    //private KafkaTemplate<String, String> kafkaTemplate;
+    private ObjectMapper objectMapper;
 
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, TokenRepository tokenRepository){
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder,
+                       TokenRepository tokenRepository /*KafkaTemplate kafkaTemplate, ObjectMapper objectMapper*/){
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.tokenRepository = tokenRepository;
+        //this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public Token login(String email, String password) {
@@ -48,7 +57,7 @@ public class UserService {
     }
     ///////////////////
 
-    public User signUp(String name, String email, String password){
+    public User signUp(String name, String email, String password) {
 
         User user = new User();
         user.setName(name);
@@ -59,6 +68,21 @@ public class UserService {
 
         //BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         user.setHashedPassword(bCryptPasswordEncoder.encode(password));
+
+        //push a sendEmail event to Kafka to send a welcome email to the user
+//        SendEmailDto emailDto = new SendEmailDto();
+//        emailDto.setTo(email);
+//        emailDto.setSubject("Welcome " + name);
+//        emailDto.setBody("Welcome to my platform");
+//
+//        try {
+//            kafkaTemplate.send(
+//                    "sendEmail",
+//                    objectMapper.writeValueAsString(emailDto)
+//            );
+//        } catch (JsonProcessingException e) {
+//            throw new RuntimeException(e);
+//        }
 
         return userRepository.save(user);
     }
